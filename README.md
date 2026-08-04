@@ -222,7 +222,7 @@ Every log submission undergoes a 5-stage processing lifecycle:
 | **Stage 5** | **Validation & Persistence** | Overwrites any AI commands/sandbox steps with `playbook_artifacts`; computes deterministic confidence score; persists to SQLite. | Final JSON returned to UI |
 
 ---
-![image](https://github.com/rishav-026/LogIntel/blob/main/LogIntelligence%20Workflow%20Diagram%20-%20visual%20selection.png)
+![image](https://github.com/rishav-026/LogIntel/blob/main/Proposed%20Solution_%20Unified%20Hybrid%20Execution%20Pipeline%20-%20visual%20selection.png)
 
 ## 7. Enterprise Root Cause Analysis Engine
 
