@@ -71,7 +71,7 @@ In contemporary microservice architectures running on Kubernetes, Docker, and hy
 - **Risks of Unconstrained AI in Operations:** Using unconstrained LLMs carries risks of hallucinating database parameters or unsafe restart procedures.
 
 ---
-![image]([https://github.com...](https://github.com/rishav-026/LogIntel/blob/main/LogIntelligence%20Workflow%20Diagram%20-%20visual%20selection%20(1).png))
+![image](https://github.com/rishav-026/LogIntel/blob/main/LogIntelligence%20Workflow%20Diagram%20-%20visual%20selection%20(1).png)
 
 ## 3. Proposed Solution
 
