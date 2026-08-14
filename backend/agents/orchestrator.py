@@ -283,16 +283,16 @@ def execute_log_analysis_pipeline(analysis_id: int, model_name: str = None):
         is_manual_investigation = confidence_score_val < 60.0
         confidence_level_val = "High Confidence" if confidence_score_val >= 85 else "Medium Confidence" if confidence_score_val >= 60 else "Low Confidence"
 
-        structured_response = dict(solution_res)
-        structured_response["_interpreter_meta"] = interpreter_data
-        
-        # Replace hallucinated commands and sandbox with authoritative rule engine output
+        # Populate authoritative playbook artifacts into solution_res
         solution_res["diagnostic_commands"] = playbook_artifacts.get("commands", [])
         solution_res["sandbox_investigation"] = playbook_artifacts.get("sandbox_steps", [])
-        solution_res["resolution_steps"] = playbook_artifacts.get("sandbox_steps", [])
+        solution_res["resolution_steps"] = playbook_artifacts.get("resolution_steps") or playbook_artifacts.get("sandbox_steps", [])
         solution_res["verification_steps"] = playbook_artifacts.get("verification_steps", [])
-        solution_res["code_patch"] = playbook_artifacts.get("code_templates", [])
-        solution_res["prevention_strategy"] = playbook_artifacts.get("recommended_fixes", [])
+        solution_res["code_patch"] = playbook_artifacts.get("code_templates", "")
+        solution_res["prevention_strategy"] = playbook_artifacts.get("prevention_steps") or playbook_artifacts.get("recommended_fixes", [])
+
+        structured_response = dict(solution_res)
+        structured_response["_interpreter_meta"] = interpreter_data
         
         # Save the finalized, fully validated payload to the agent runs table
         record_agent_run(
