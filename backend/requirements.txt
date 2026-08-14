@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+primp
+requests
+langchain-community
+langchain-core
+langchain-ollama

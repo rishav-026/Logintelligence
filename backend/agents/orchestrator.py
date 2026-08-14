@@ -45,9 +45,17 @@ from playbooks.engine import get_operational_artifacts
 from prompts.unified_prompts import UNIFIED_SRE_SYSTEM_PROMPT, UNIFIED_SRE_USER_PROMPT
 try:
     from langchain_ollama import ChatOllama
-except ImportError:
-    from langchain_community.chat_models import ChatOllama
-from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    try:
+        from langchain_community.chat_models import ChatOllama
+    except Exception:
+        ChatOllama = None
+
+try:
+    from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    SystemMessage = None
+    HumanMessage = None
 
 def execute_log_analysis_pipeline(analysis_id: int, model_name: str = None):
     """

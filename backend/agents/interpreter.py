@@ -3,9 +3,17 @@ import logging
 from typing import Dict, Any
 try:
     from langchain_ollama import ChatOllama
-except ImportError:
-    from langchain_community.chat_models import ChatOllama
-from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    try:
+        from langchain_community.chat_models import ChatOllama
+    except Exception:
+        ChatOllama = None
+
+try:
+    from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    SystemMessage = None
+    HumanMessage = None
 
 from prompts.interpreter_prompts import INTERPRETER_SYSTEM_PROMPT, INTERPRETER_USER_PROMPT
 from utils.severity_heuristics import detect_severity, extract_tech_stack_keywords, extract_metrics_from_log, extract_error_codes, extract_infrastructure_metadata

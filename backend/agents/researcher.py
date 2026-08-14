@@ -3,10 +3,22 @@ import logging
 from typing import Dict, Any, List
 try:
     from langchain_ollama import ChatOllama
-except ImportError:
-    from langchain_community.chat_models import ChatOllama
-from langchain_community.tools import DuckDuckGoSearchRun
-from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    try:
+        from langchain_community.chat_models import ChatOllama
+    except Exception:
+        ChatOllama = None
+
+try:
+    from langchain_community.tools import DuckDuckGoSearchRun
+except Exception:
+    DuckDuckGoSearchRun = None
+
+try:
+    from langchain_core.messages import SystemMessage, HumanMessage
+except Exception:
+    SystemMessage = None
+    HumanMessage = None
 
 from prompts.researcher_prompts import RESEARCHER_SYSTEM_PROMPT, RESEARCHER_USER_PROMPT
 from utils.search_ranker import build_optimized_search_query, build_multiple_search_queries, rank_search_results
