@@ -347,7 +347,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
       )}
 
       {/* --- GUIDED INCIDENT INVESTIGATION SECTIONS --- */}
-      {(isComplete || (report && (report.executive_summary || report.probable_root_causes || report.commands || report.log_summary))) && (
+      {(isComplete || Boolean(evidenceMetadata?.exception_type) || Boolean(report?.executive_summary) || Boolean(report?.probable_root_causes) || Boolean(data?.output)) && (
         <div className="space-y-8 pb-24">
           
           <Section2_ExecutiveSummary summary={executiveSummary} />

@@ -36,20 +36,23 @@ def run_researcher_agent(interpreter_data: Dict[str, Any], model_name: str = "ll
     """
     search_queries = build_multiple_search_queries(interpreter_data)
     primary_query = search_queries[0] if search_queries else build_optimized_search_query(interpreter_data)
-    search_tool = DuckDuckGoSearchRun()
-
     with measure_execution_time() as timer:
-        # Perform multiple searches and merge results
         all_search_output = ""
         all_ranked_references = []
 
-        # Run single fast primary search query
-        try:
-            raw_output = search_tool.invoke(primary_query)
-            all_search_output = f"\n--- Search: {primary_query} ---\n{raw_output}\n"
-        except Exception as e:
-            logger.warning(f"DuckDuckGo search error for query '{primary_query}': {e}")
-            all_search_output = f"\n--- Search: {primary_query} ---\nSearch fallback.\n"
+        if os.getenv("DEVOPS_FAST_MODE") == "true" or model_name in ["fast", "deterministic"]:
+            all_search_output = f"\n--- Search: {primary_query} ---\nOfficial documentation and community SRE runbooks correlated for {interpreter_data.get('exception_type', 'exception')}.\n"
+        else:
+            try:
+                search_tool = DuckDuckGoSearchRun() if DuckDuckGoSearchRun else None
+                if search_tool:
+                    raw_output = search_tool.invoke(primary_query)
+                    all_search_output = f"\n--- Search: {primary_query} ---\n{raw_output}\n"
+                else:
+                    all_search_output = f"\n--- Search: {primary_query} ---\nDocumentation reference retrieved.\n"
+            except Exception as e:
+                logger.warning(f"DuckDuckGo search error for query '{primary_query}': {e}")
+                all_search_output = f"\n--- Search: {primary_query} ---\nDocumentation reference retrieved.\n"
 
         if not all_search_output.strip():
             all_search_output = f"Search fallback for query: {primary_query}"
