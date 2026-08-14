@@ -1,0 +1,48 @@
+/* frontend/styles/theme.css */
+:root {
+  /* Primary color — Datadog/Grafana enterprise blue */
+  --color-primary: #3B82F6;
+  --color-primary-dim: rgba(59, 130, 246, 0.12);
+  --color-primary-border: rgba(59, 130, 246, 0.25);
+
+  /* Secondary accent — cyan */
+  --color-secondary: #06B6D4;
+  --color-secondary-dim: rgba(6, 182, 212, 0.10);
+  --color-secondary-border: rgba(6, 182, 212, 0.22);
+
+  /* Semantic */
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-critical: #EF4444;
+
+  /* Surfaces */
+  --color-bg:       #0B1220;
+  --color-surface:  #111827;
+  --color-card:     #1E293B;
+  --color-muted:    #334155;
+
+  /* Text */
+  --color-text-primary:   #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:     #64748B;
+}
+
+/* Utility aliases */
+.bg-background { background-color: var(--color-bg); }
+.bg-surface     { background-color: var(--color-surface); }
+.text-foreground { color: var(--color-text-primary); }
+.text-muted      { color: var(--color-text-muted); }
+
+/* Premium CTA button — blue primary */
+.btn-premium {
+  background: linear-gradient(135deg, #3B82F6, #2563EB);
+  color: #fff;
+  font-weight: 700;
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.btn-premium:hover { opacity: 0.92; transform: translateY(-1px); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-bg); }
+::-webkit-scrollbar-thumb { background-color: var(--color-muted); border-radius: 4px; }
