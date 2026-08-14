@@ -31,13 +31,13 @@ def run_researcher_agent(interpreter_data: Dict[str, Any], model_name: str = "ll
         all_search_output = ""
         all_ranked_references = []
 
-        for query in search_queries:
-            try:
-                raw_output = search_tool.invoke(query)
-                all_search_output += f"\n--- Search: {query} ---\n{raw_output}\n"
-            except Exception as e:
-                logger.warning(f"DuckDuckGo search error for query '{query}': {e}")
-                all_search_output += f"\n--- Search: {query} ---\nSearch fallback.\n"
+        # Run single fast primary search query
+        try:
+            raw_output = search_tool.invoke(primary_query)
+            all_search_output = f"\n--- Search: {primary_query} ---\n{raw_output}\n"
+        except Exception as e:
+            logger.warning(f"DuckDuckGo search error for query '{primary_query}': {e}")
+            all_search_output = f"\n--- Search: {primary_query} ---\nSearch fallback.\n"
 
         if not all_search_output.strip():
             all_search_output = f"Search fallback for query: {primary_query}"

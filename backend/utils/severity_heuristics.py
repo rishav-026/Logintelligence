@@ -274,10 +274,17 @@ def extract_infrastructure_metadata(raw_log: str) -> Dict[str, str]:
         "environment": "Unknown"
     }
 
-    # Match key-value pairs like "Service: recommendation-service"
-    service_match = re.search(r"(?:service|app|application)[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-    if service_match:
-        meta["service"] = service_match.group(1).strip()
+    # Match bracketed service tags like "[session-service]" or explicit service keys
+    bracket_matches = re.findall(r"\[([a-zA-Z][a-zA-Z0-9_-]{2,})\]", raw_log)
+    valid_bracket_service = [b for b in bracket_matches if not b.lower().startswith(('k8s', 'docker', 'ingress', 'kernel', 'command', 'warn', 'error', 'info', 'debug', 'trace'))]
+    
+    if valid_bracket_service:
+        meta["service"] = valid_bracket_service[0].strip()
+    else:
+        service_matches = re.findall(r"(?:service|app|application|upstream)[\s_:=]+([a-zA-Z][a-zA-Z0-9_-]{2,})", raw_log, re.IGNORECASE)
+        valid_service_matches = [s for s in service_matches if not s.isdigit() and not s.lower().startswith(('nginx', 'docker', 'k8s', 'error', 'http'))]
+        if valid_service_matches:
+            meta["service"] = valid_service_matches[0].strip()
         
     pod_match = re.search(r"pod[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
     if pod_match:
@@ -373,25 +380,21 @@ def extract_log_metadata(raw_log: str) -> Dict[str, Any]:
         "severity": ""
     }
 
-    # 1. Detect Infrastructure / Identity
-    service_match = re.search(r"Service:\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-    if service_match: 
-        meta["service"] = service_match.group(1).strip()
-    else:
-        alt_match = re.search(r"(?:^|\s)(?:service|app|application)[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-        if alt_match: meta["service"] = alt_match.group(1).strip()
-    
-    env_match = re.search(r"(?:^|\s)(?:env|environment)[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-    if env_match: meta["environment"] = env_match.group(1).strip()
-    
-    cluster_match = re.search(r"cluster[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-    if cluster_match: meta["cluster"] = cluster_match.group(1).strip()
-    
-    ns_match = re.search(r"namespace[\s_]*[:=]\s*([a-zA-Z0-9_-]+)", raw_log, re.IGNORECASE)
-    if ns_match: meta["namespace"] = ns_match.group(1).strip()
-    
-    node_match = re.search(r"(?:node)[\s_]*[:=]\s*([a-zA-Z0-9_.-]+)", raw_log, re.IGNORECASE)
-    if node_match: meta["node"] = node_match.group(1).strip()
+    # 1. Detect Infrastructure / Identity using extract_infrastructure_metadata
+    infra_meta = extract_infrastructure_metadata(raw_log)
+    if infra_meta.get("service") and infra_meta["service"] != "Unknown Service":
+        meta["service"] = infra_meta["service"]
+    if infra_meta.get("environment") and infra_meta["environment"] != "Unknown":
+        meta["environment"] = infra_meta["environment"]
+    if infra_meta.get("cluster") and infra_meta["cluster"] != "Unknown":
+        meta["cluster"] = infra_meta["cluster"]
+    if infra_meta.get("namespace") and infra_meta["namespace"] != "Unknown":
+        meta["namespace"] = infra_meta["namespace"]
+    if infra_meta.get("node") and infra_meta["node"] != "Unknown":
+        meta["node"] = infra_meta["node"]
+
+    host_match = re.search(r"(?:hostname|host)[\s_]*[:=]\s*([a-zA-Z0-9_.-]+)", raw_log, re.IGNORECASE)
+    if host_match: meta["hostname"] = host_match.group(1).strip()
 
     host_match = re.search(r"(?:hostname|host)[\s_]*[:=]\s*([a-zA-Z0-9_.-]+)", raw_log, re.IGNORECASE)
     if host_match: meta["hostname"] = host_match.group(1).strip()
