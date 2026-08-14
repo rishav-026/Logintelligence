@@ -27,53 +27,76 @@ export interface StepData {
 
 interface InvestigationWorkspaceProps {
   reportData?: any;
+  steps?: StepData[];
+  targetService?: string;
+  technology?: string;
+  environment?: string;
+  rootCause?: string;
+  observedAnomaly?: string;
+  confidenceScore?: number | string;
   onClose?: () => void;
 }
 
-const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({ reportData, onClose }) => {
+const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({ 
+  reportData, 
+  steps: directSteps,
+  targetService: directTargetService,
+  technology: directTechnology,
+  environment: directEnvironment,
+  rootCause: directRootCause,
+  observedAnomaly: directObservedAnomaly,
+  confidenceScore: directConfidenceScore,
+  onClose 
+}) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [copied, setCopied] = useState(false);
 
   // Parse evidence & sandbox investigation steps from backend payload
   const report = reportData?.report || reportData?.output || reportData || {};
-  const steps: StepData[] = report?.sandbox_investigation || [
-    {
-      title: "Log Trace Inspection",
-      command: "kubectl logs -l app=core-service --tail=100",
-      purpose: "Inspect recent container logs for uncaught exceptions",
-      expected_output: "ERROR: Connection pool exhausted. Timeout acquiring connection after 5000ms.",
-      finding: "Connection pool exhaustion detected in core application service",
-      evidence: "Log timestamp correlation shows 500 error spikes",
-      next_step: "Inspect DB connection pool metrics",
-      estimated_time: "15s"
-    },
-    {
-      title: "Resource & Pool Diagnostics",
-      command: "pg_stat_activity --query 'SELECT count(*) FROM pg_stat_activity WHERE state=\"active\"'",
-      purpose: "Check database active connections vs maximum pool limit",
-      expected_output: "count: 100 (max_connections: 100 reached)",
-      finding: "Database max_connections limit reached; orphaned transactions holding pool slots",
-      evidence: "Active connection count = 100",
-      next_step: "Identify leak source in query handler",
-      estimated_time: "20s"
-    },
-    {
-      title: "Root Cause Verification & Patching",
-      command: "helm upgrade core-service ./chart --set db.pool.maxSize=250",
-      purpose: "Increase connection pool capacity and deploy patch",
-      expected_output: "Release core-service updated. Status: DEPLOYED",
-      finding: "Service connection pool resized and leak handler deployed successfully",
-      evidence: "Error rate dropped to 0.00%",
-      next_step: "Close Incident",
-      estimated_time: "30s"
-    }
-  ];
+  const activeSvc = directTargetService || report?.target_service || report?.service || report?.affected_service || "affected-service";
+
+  const steps: StepData[] = (directSteps && directSteps.length > 0) 
+    ? directSteps 
+    : (report?.sandbox_investigation && report.sandbox_investigation.length > 0)
+    ? report.sandbox_investigation 
+    : [
+        {
+          title: `Log Trace Inspection`,
+          command: `kubectl logs -l app=${activeSvc} --tail=100`,
+          purpose: `Inspect recent container logs for uncaught exception signatures`,
+          expected_output: `ERROR: Exception signature detected in active runtime stream.`,
+          finding: `Exception signature correlated in ${activeSvc}`,
+          evidence: `Log timestamp correlation shows 500 error spikes`,
+          next_step: `Inspect resource limits and active connection metrics`,
+          estimated_time: `15s`
+        },
+        {
+          title: `Resource & Pool Diagnostics`,
+          command: `kubectl top pod -l app=${activeSvc}`,
+          purpose: `Check active resource consumption vs maximum pool limit`,
+          expected_output: `CPU and Memory utilization evaluated near capacity limits`,
+          finding: `Resource or connection pool capacity limits reached`,
+          evidence: `Active pod telemetry verified`,
+          next_step: `Deploy remediation patch`,
+          estimated_time: `20s`
+        },
+        {
+          title: `Root Cause Verification & Patching`,
+          command: `kubectl rollout restart deployment/${activeSvc}`,
+          purpose: `Deploy configuration patch and initialize clean container instance`,
+          expected_output: `deployment.apps/${activeSvc} restarted successfully`,
+          finding: `Service connection pool resized and clean instances deployed successfully`,
+          evidence: `Error rate dropped to 0.00%`,
+          next_step: `Close Incident`,
+          estimated_time: `30s`
+        }
+      ];
 
   const totalSteps = steps.length;
   const stepData = steps[currentIdx] || steps[0];
 
-  const targetService = report?.target_service || report?.service || "core-backend-api";
-  const rootCause = (() => {
+  const targetService = activeSvc;
+  const rootCause = directRootCause || (() => {
     if (report?.root_cause_analysis?.primary_root_cause) return report.root_cause_analysis.primary_root_cause;
     if (report?.root_cause_analysis?.possible_causes?.[0]?.cause) return report.root_cause_analysis.possible_causes[0].cause;
     const rc = report?.root_cause || report?.probable_root_causes;
@@ -82,9 +105,9 @@ const InvestigationWorkspace: React.FC<InvestigationWorkspaceProps> = ({ reportD
     if (report?._interpreter_meta?.exception_type) return `${report._interpreter_meta.exception_type} on ${targetService}`;
     return "Database Connection Timeout";
   })();
-  const confidenceScore = report?.root_cause_analysis?.possible_causes?.[0]?.confidence || report?.confidence_score || "94";
-  const observedAnomaly = report?.executive_summary || report?.issue_summary || "500 Internal Server Error Spikes";
-  const technology = report?.technology_detected || report?.technology || "PostgreSQL & FastAPI";
+  const confidenceScore = directConfidenceScore || report?.root_cause_analysis?.possible_causes?.[0]?.confidence || report?.confidence_score || "94";
+  const observedAnomaly = directObservedAnomaly || report?.executive_summary || report?.issue_summary || "500 Internal Server Error Spikes";
+  const technology = directTechnology || report?.technology_detected || report?.technology || "MongoDB & Microservices";
 
   const handleCopyCommand = () => {
     if (stepData.command) {
