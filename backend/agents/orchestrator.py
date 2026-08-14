@@ -62,7 +62,7 @@ def execute_log_analysis_pipeline(analysis_id: int, model_name: str = None):
     Refactored Single-LLM Inference Pipeline
     """
     if not model_name:
-        model_name = os.getenv("DEVOPS_LOG_MODEL", "llama3")
+        model_name = os.getenv("DEVOPS_LOG_MODEL", "fast")
 
     db = SessionLocal()
     start_time = time.perf_counter()
