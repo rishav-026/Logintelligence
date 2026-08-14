@@ -24,9 +24,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+import asyncio
+import logging
+import requests
+
+logger = logging.getLogger(__name__)
+
 @app.on_event("startup")
 def on_startup():
     init_db()
+    
+    # Render keep-alive anti-sleep background task
+    render_url = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("BACKEND_URL")
+    if render_url:
+        async def keep_alive_loop():
+            while True:
+                await asyncio.sleep(300)  # Ping every 5 minutes (300s)
+                try:
+                    target = f"{render_url.rstrip('/')}/api/health"
+                    requests.get(target, timeout=5)
+                    logger.info(f"Render anti-sleep keep-alive ping sent to {target}")
+                except Exception as e:
+                    logger.warning(f"Keep-alive ping error: {e}")
+
+        loop = asyncio.get_event_loop()
+        loop.create_task(keep_alive_loop())
 
 app.include_router(api_router)
 
