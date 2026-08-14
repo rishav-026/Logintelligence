@@ -14,9 +14,11 @@ export default function HistoryTimelinePage() {
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<number | null>(null);
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   const fetchHistory = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/history');
+      const res = await fetch(`${API_BASE}/api/history`);
       if (res.ok) {
         const data = await res.json();
         setAnalyses(data);
@@ -39,7 +41,7 @@ export default function HistoryTimelinePage() {
 
     setActionId(id);
     try {
-      const res = await fetch(`http://localhost:8000/api/report/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/report/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setAnalyses(prev => prev.filter(item => item.id !== id));
       }
@@ -57,7 +59,7 @@ export default function HistoryTimelinePage() {
 
     setActionId(id);
     try {
-      const res = await fetch(`http://localhost:8000/api/reanalyze/${id}`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/reanalyze/${id}`, { method: 'POST' });
       if (res.ok) {
         await fetchHistory();
       }

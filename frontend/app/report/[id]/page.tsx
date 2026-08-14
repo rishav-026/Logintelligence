@@ -37,11 +37,13 @@ export default function RedesignedIncidentReportPage() {
   
   const telemetryEndRef = useRef<HTMLDivElement>(null);
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/report/${id}`);
+        const res = await fetch(`${API_BASE}/api/report/${id}`);
         if (!res.ok) throw new Error(`Report #${id} not found.`);
         const result = await res.json();
         setData(result);
@@ -64,7 +66,7 @@ export default function RedesignedIncidentReportPage() {
     if (!confirm("Re-run SRE agent diagnostic loop for this log?")) return;
     setIsActionLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/reanalyze/${id}`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/api/reanalyze/${id}`, { method: 'POST' });
       if (res.ok) {
         const updated = await res.json();
         setData(updated);
@@ -80,7 +82,7 @@ export default function RedesignedIncidentReportPage() {
     if (!confirm("Are you sure you want to delete this report?")) return;
     setIsActionLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/report/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/api/report/${id}`, { method: 'DELETE' });
       if (res.ok) {
         router.push('/history');
       }

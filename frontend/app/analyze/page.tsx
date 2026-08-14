@@ -25,9 +25,11 @@ export default function AnalyzeWorkspacePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   const fetchHistory = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/history');
+      const res = await fetch(`${API_BASE}/api/history`);
       if (res.ok) {
         const data = await res.json();
         setHistory(data.slice(0, 8)); // Top 8 items
@@ -47,7 +49,7 @@ export default function AnalyzeWorkspacePage() {
     if (!logText.trim()) return;
     setIsSubmitting(true);
     try {
-      const res = await fetch('http://localhost:8000/api/analyze', {
+      const res = await fetch(`${API_BASE}/api/analyze`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ raw_log_text: logText, source_type: sourceType })

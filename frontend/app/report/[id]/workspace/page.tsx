@@ -21,10 +21,12 @@ const WorkspacePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/report/${id}`);
+        const res = await fetch(`${API_BASE}/api/report/${id}`);
         if (!res.ok) throw new Error('Failed to fetch report');
         const data: any = await res.json();
 
