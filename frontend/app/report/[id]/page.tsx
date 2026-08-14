@@ -242,7 +242,8 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
     if (evidenceMetadata?.exception_type) {
       const err = evidenceMetadata.error_codes?.[0] ? ` (${evidenceMetadata.error_codes[0]})` : '';
-      const causeStr = `${evidenceMetadata.exception_type}${err} on ${data?.affected_service || 'session-service'}`;
+      const activeSvc = (data?.affected_service && data.affected_service !== 'Unknown Service') ? data.affected_service : (evidenceMetadata?.service && evidenceMetadata.service !== 'Unknown Service') ? evidenceMetadata.service : 'affected service';
+      const causeStr = `${evidenceMetadata.exception_type}${err} on ${activeSvc}`;
       return [{
         cause: causeStr,
         probability_percentage: data?.confidence_score || 83,
@@ -253,34 +254,64 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
     return [];
   })();
   
-  const businessImpact = report?.business_impact || "";
+  const businessImpact = report?.business_impact || data?.output?.impact || "";
 
   const timelineEvents = report?.timeline_events || [];
 
-  const reasoningChain = (() => {
-      if (report?.sandbox_investigation && Array.isArray(report.sandbox_investigation)) {
-          return report.sandbox_investigation.map((step: any, idx: number) => ({
-              step: `Investigation Stage ${idx + 1}`,
-              observation: step.evidence_collected?.key || 'Investigating log trace',
-              conclusion: step.ai_insight || 'Verified state'
-          }));
-      }
-      return [];
+  const resolutionSteps = (() => {
+    if (report?.resolution_steps && Array.isArray(report.resolution_steps) && report.resolution_steps.length > 0) {
+      return report.resolution_steps;
+    }
+    if (report?.sandbox_investigation && Array.isArray(report.sandbox_investigation) && report.sandbox_investigation.length > 0) {
+      return report.sandbox_investigation;
+    }
+    if (data?.output?.commands && Array.isArray(data.output.commands) && data.output.commands.length > 0) {
+      return data.output.commands.map((cmd: string, idx: number) => ({
+        step: idx + 1,
+        title: `Diagnostic Check ${idx + 1}`,
+        purpose: 'Execute diagnostic verification command',
+        command: cmd,
+        expected_output: 'Command output verified',
+        ai_explanation: 'Inspect telemetry metrics and service response',
+        estimated_duration: '30 seconds',
+        risk_level: 'Low',
+        requires_restart: 'No'
+      }));
+    }
+    return [];
   })();
-
-  const resolutionSteps = report?.resolution_steps || [];
   
-  const verificationSteps = report?.verification_steps || [];
+  const verificationSteps = (() => {
+    if (report?.verification_steps && Array.isArray(report.verification_steps) && report.verification_steps.length > 0) {
+      return report.verification_steps;
+    }
+    if (data?.output?.recommended_fixes && Array.isArray(data.output.recommended_fixes) && data.output.recommended_fixes.length > 0) {
+      return data.output.recommended_fixes.map((fix: string) => ({
+        check: fix,
+        expected_state: 'Verified',
+        reason: 'Confirms incident mitigation'
+      }));
+    }
+    return [];
+  })();
   
   const sandboxSteps = report?.sandbox_investigation || [];
   
-  const codePatch = report?.code_patch || report?.example_code || "";
+  const codePatch = report?.code_patch || report?.example_code || data?.output?.example_code || "";
   
   const monitoringRecs = Array.isArray(report?.monitoring_recommendations) ? report.monitoring_recommendations : [];
   
   const rollbackStrategy = report?.rollback_strategy || [];
   
-  const preventionStrategy = Array.isArray(report?.prevention_strategy) ? report.prevention_strategy : [];
+  const preventionStrategy = (() => {
+    if (Array.isArray(report?.prevention_strategy) && report.prevention_strategy.length > 0) {
+      return report.prevention_strategy;
+    }
+    if (Array.isArray(data?.output?.recommended_fixes) && data.output.recommended_fixes.length > 0) {
+      return data.output.recommended_fixes;
+    }
+    return [];
+  })();
 
   return (
     <div className="w-full max-w-4xl mx-auto py-10 px-4 sm:px-6 lg:px-8 space-y-12">

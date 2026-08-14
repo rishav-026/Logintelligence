@@ -257,7 +257,7 @@ def execute_log_analysis_pipeline(analysis_id: int, model_name: str = None):
             possible_causes_list = [f"{c.get('probability_percentage', 0)}% - {c.get('cause', '')}" for c in rca["possible_causes"]]
         else:
             exc_type = interpreter_data.get("exception_type") or (interpreter_data.get("error_codes")[0] if interpreter_data.get("error_codes") else "System Error")
-            svc_name = interpreter_data.get("service") or "service"
+            svc_name = interpreter_data.get("service") if (interpreter_data.get("service") and interpreter_data.get("service") != "Unknown Service") else "affected service"
             derived_cause = f"{exc_type} on {svc_name}"
             possible_causes_list = [derived_cause]
             solution_res["root_cause_analysis"] = {
@@ -285,6 +285,14 @@ def execute_log_analysis_pipeline(analysis_id: int, model_name: str = None):
 
         structured_response = dict(solution_res)
         structured_response["_interpreter_meta"] = interpreter_data
+        
+        # Replace hallucinated commands and sandbox with authoritative rule engine output
+        solution_res["diagnostic_commands"] = playbook_artifacts.get("commands", [])
+        solution_res["sandbox_investigation"] = playbook_artifacts.get("sandbox_steps", [])
+        solution_res["resolution_steps"] = playbook_artifacts.get("sandbox_steps", [])
+        solution_res["verification_steps"] = playbook_artifacts.get("verification_steps", [])
+        solution_res["code_patch"] = playbook_artifacts.get("code_templates", [])
+        solution_res["prevention_strategy"] = playbook_artifacts.get("recommended_fixes", [])
         
         # Save the finalized, fully validated payload to the agent runs table
         record_agent_run(
